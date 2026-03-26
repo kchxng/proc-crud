@@ -1,0 +1,34 @@
+#include <stdio.h>
+#include <string.h>
+#include "db.h"
+EXEC SQL INCLUDE sqlca;
+
+int db_connect(void)
+{
+    EXEC SQL BEGIN DECLARE SECTION;
+        char username[30];
+        char password[30];
+    EXEC SQL END DECLARE SECTION;
+
+    memset(username, 0x00, sizeof(username));
+    memset(password, 0x00, sizeof(password));
+
+    strncpy(username, DB_USER, sizeof(username) - 1);
+    strncpy(password, DB_PASS, sizeof(password) - 1);
+
+    EXEC SQL CONNECT :username IDENTIFIED BY :password;
+
+    if (sqlca.sqlcode != 0) {
+        printf("Connect failed\n");
+        return FALSE;
+    }
+
+    printf("Connected successfully.\n");
+    return TRUE;
+}
+
+void db_disconnect(void)
+{
+    EXEC SQL COMMIT WORK RELEASE;
+    printf("Disconnected successfully.\n");
+}

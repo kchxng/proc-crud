@@ -1,0 +1,129 @@
+
+#include <stdio.h>
+#include "db.h"
+EXEC SQL INCLUDE sqlca;
+int main()
+{
+    if (!db_connect())
+    {
+        return 1;
+    }
+
+    // Perform database operations here
+
+    db_disconnect();
+    return 0;
+}
+
+int read_data(int empno)
+{
+    EXEC SQL BEGIN DECLARE SECTION;
+    int h_empno;
+    char h_ename[21];
+    float h_sal;
+    EXEC SQL END DECLARE SECTION;
+
+    h_empno = empno;
+    memset(h_ename, 0x00, sizeof(h_ename));
+    h_sal = 0;
+
+    EXEC SQL
+        SELECT ename,
+        sal
+            INTO : h_ename,
+        : h_sal
+              FROM emp_test
+                  WHERE empno = : h_empno;
+
+    if (sqlca.sqlcode == 0)
+    {
+        printf("SELECT success: EMPNO=%d ENAME=%s SAL=%.2f\n",
+               h_empno, h_ename, h_sal);
+    }
+    else if (sqlca.sqlcode == 100 || sqlca.sqlcode == 1403)
+    {
+        printf("No data found for EMPNO=%d\n", h_empno);
+    }
+    else
+    {
+        print_sql_error("SELECT failed");
+    }
+}
+
+int insert_data(int empno, const char *ename, float sal)
+{
+    EXEC SQL BEGIN DECLARE SECTION;
+    int h_empno;
+    char h_ename[21];
+    float h_sal;
+    EXEC SQL END DECLARE SECTION;
+
+    h_empno = empno;
+    h_sal = sal;
+
+    memset(h_ename, 0x00, sizeof(h_ename));
+    strncpy(h_ename, ename, sizeof(h_ename) - 1);
+
+    EXEC SQL
+        INSERT INTO emp_test(empno, ename, sal)
+            VALUES( : h_empno, : h_ename, : h_sal);
+
+    if (sqlca.sqlcode != 0)
+    {
+        print_sql_error("INSERT failed");
+        EXEC SQL ROLLBACK;
+        return FALSE;
+    }
+
+    EXEC SQL COMMIT;
+    return TRUE;
+}
+
+int update_data(int empno, float sal)
+{
+    EXEC SQL BEGIN DECLARE SECTION;
+    int h_empno;
+    float h_sal;
+    EXEC SQL END DECLARE SECTION;
+
+    h_empno = empno;
+    h_sal = sal;
+
+    EXEC SQL
+        UPDATE emp_test
+            SET sal = : h_sal
+                            WHERE empno = : h_empno;
+
+    if (sqlca.sqlcode != 0)
+    {
+        printf("UPDATE failed\n");
+        EXEC SQL ROLLBACK;
+        return;
+    }
+
+    EXEC SQL COMMIT;
+    printf("UPDATE success, rows=%ld\n", sqlca.sqlerrd[2]);
+}
+
+int delete_data(int empno)
+{
+    EXEC SQL BEGIN DECLARE SECTION;
+    int h_empno;
+    EXEC SQL END DECLARE SECTION;
+
+    h_empno = empno;
+
+    EXEC SQL
+        DELETE FROM emp_test
+            WHERE empno = : h_empno;
+
+    if (sqlca.sqlcode != 0)
+    {
+        print_sql_error("DELETE failed");
+        EXEC SQL ROLLBACK;
+        return FALSE;
+    }
+
+    EXEC SQL COMMIT;
+    return TRUE;
+}
