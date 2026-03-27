@@ -1,17 +1,40 @@
 
 #include <stdio.h>
 #include "db.h"
+
 EXEC SQL INCLUDE sqlca;
 int main()
 {
-    if (!db_connect())
-    {
+   if (db_connect() == FALSE) {
+        printf("Stop: DB connection failed\n");
         return 1;
     }
 
-    // Perform database operations here
+    if (emp_insert(1001, "JOHN", 5000.00f) == FALSE) {
+        printf("Stop: Insert failed\n");
+        db_disconnect();
+        return 1;
+    }
+
+    if (emp_update(1001, 6000.00f) == FALSE) {
+        printf("Stop: Update failed\n");
+        db_disconnect();
+        return 1;
+    }
+
+    if (emp_select(1001) == FALSE) {
+        printf("Warning: Data not found\n");
+    }
+
+    if (emp_delete(1001) == FALSE) {
+        printf("Stop: Delete failed\n");
+        db_disconnect();
+        return 1;
+    }
 
     db_disconnect();
+
+    printf("All steps completed successfully\n");
     return 0;
 }
 
