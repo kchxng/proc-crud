@@ -1,6 +1,7 @@
 
 #include <stdio.h>
 #include "db.h"
+#include "emp.h"
 
 EXEC SQL INCLUDE sqlca;
 int main()
